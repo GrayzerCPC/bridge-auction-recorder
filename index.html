@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Bridge Auction Recorder</title>
+<style>
+:root{--blue:#17324d;--light:#eef2f5;--line:#d8dee4;--text:#17212b}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f3f5f7;color:var(--text)}
+header{background:var(--blue);color:#fff;padding:13px 15px;position:sticky;top:0;z-index:5}
+h1{font-size:20px;margin:0 0 4px}.meta{font-size:13px;opacity:.9}
+main{max-width:820px;margin:auto;padding:10px 12px 28px}
+.card{background:#fff;border-radius:14px;padding:13px;margin-bottom:10px;box-shadow:0 1px 5px #0001}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+label{font-size:12px;font-weight:700;color:#56616c}
+select,input,button,textarea{font:inherit;border-radius:9px;border:1px solid #cbd3da;background:#fff;padding:9px}
+select,input,textarea{width:100%;margin-top:4px}
+button{font-weight:700;cursor:pointer}
+.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.danger{background:#fff2f2;border-color:#e1aaaa}
+.boardnav{display:flex;gap:8px;align-items:center}.boardnav button{flex:1}.boardnum{font-weight:800;min-width:86px;text-align:center}
+.auctionWrap{overflow-x:auto}.auction{display:grid;grid-template-columns:repeat(4,minmax(72px,1fr));gap:4px;min-width:300px}
+.seat,.bid{text-align:center;padding:7px;border-radius:7px}.seat{font-weight:800;background:var(--light)}.bid{min-height:40px;border:1px solid #e6eaed}
+.last{outline:3px solid #a7bfd2}.contract{margin-top:10px;padding:9px;background:#f8fafb;border-radius:9px;font-weight:800}
+.section-title{font-weight:800;margin-bottom:8px}
+.bidgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.bidgrid button{padding:9px 3px;min-height:40px}
+.tools{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}.tools button{flex:1;min-width:120px}
+.alertBox{display:none;margin-top:8px;padding:9px;background:#fff8db;border:1px solid #e4cf70;border-radius:9px}.alertBox.open{display:block}
+.review-row{padding:10px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.review-row .details{min-width:0}.auctionText{font-size:13px;line-height:1.35}.small{font-size:12px;color:#63707c}
+.summary{font-size:13px;line-height:1.55;white-space:pre-wrap;background:#f8fafb;border-radius:9px;padding:10px}
+@media(max-width:520px){.bidgrid{grid-template-columns:repeat(4,1fr)}.grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1>Bridge Auction Recorder</h1>
+<div class="meta" id="sessionMeta"></div>
+</header>
+<main>
+
+<div class="card">
+  <div class="grid">
+    <label>Session name<input id="sessionName" placeholder="e.g. Tuesday pairs"></label>
+    <label>Board
+      <select id="board"></select>
+    </label>
+    <label>Dealer
+      <select id="dealer"><option>North</option><option>East</option><option>South</option><option>West</option></select>
+    </label>
+    <label>Vulnerability
+      <select id="vul"><option>None</option><option>NS</option><option>EW</option><option>Both</option></select>
+    </label>
+  </div>
+</div>
+
+<div class="card">
+  <div class="boardnav">
+    <button id="prev">← Previous</button>
+    <div class="boardnum" id="boardLabel">Board 1</div>
+    <button id="next">Next →</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">Auction</div>
+  <div class="auctionWrap"><div class="auction" id="auction"></div></div>
+  <div id="contract" class="contract"></div>
+
+  <div class="bidgrid" style="margin-top:9px">
+    <button data-bid="P">Pass</button><button data-bid="X">X</button><button data-bid="XX">XX</button>
+    <button data-bid="1C">1♣</button><button data-bid="1D">1♦</button><button data-bid="1H">1♥</button>
+    <button data-bid="1S">1♠</button><button data-bid="1NT">1NT</button>
+    <button data-bid="2C">2♣</button><button data-bid="2D">2♦</button><button data-bid="2H">2♥</button>
+    <button data-bid="2S">2♠</button><button data-bid="2NT">2NT</button>
+    <button data-bid="3C">3♣</button><button data-bid="3D">3♦</button><button data-bid="3H">3♥</button>
+    <button data-bid="3S">3♠</button><button data-bid="3NT">3NT</button>
+    <button data-bid="4C">4♣</button><button data-bid="4D">4♦</button><button data-bid="4H">4♥</button>
+    <button data-bid="4S">4♠</button><button data-bid="4NT">4NT</button>
+    <button data-bid="5C">5♣</button><button data-bid="5D">5♦</button><button data-bid="5H">5♥</button>
+    <button data-bid="5S">5♠</button><button data-bid="5NT">5NT</button>
+    <button data-bid="6C">6♣</button><button data-bid="6D">6♦</button><button data-bid="6H">6♥</button>
+    <button data-bid="6S">6♠</button><button data-bid="6NT">6NT</button>
+    <button data-bid="7C">7♣</button><button data-bid="7D">7♦</button><button data-bid="7H">7♥</button>
+    <button data-bid="7S">7♠</button><button data-bid="7NT">7NT</button>
+  </div>
+
+  <div class="tools">
+    <button id="undo">↶ Undo</button>
+    <button id="clear" class="danger">Clear auction</button>
+    <button id="alertBtn">⚑ Alert last bid</button>
+  </div>
+  <div id="alertBox" class="alertBox">
+    <label>Alert / explanation for the last bid
+      <input id="alertText" placeholder="e.g. Transfer to hearts">
+    </label>
+    <div class="tools"><button id="saveAlert" class="primary">Save alert</button><button id="cancelAlert">Cancel</button></div>
+  </div>
+
+  <div class="grid" style="margin-top:9px">
+    <label>Contract (optional)<input id="contractInput" placeholder="e.g. 4♥ by South"></label>
+    <label>Result (optional)<input id="resultInput" placeholder="e.g. +420, -1, made 4"></label>
+  </div>
+  <label style="display:block;margin-top:8px">Review comment<textarea id="comment" rows="2" placeholder="e.g. Should have bid 3♥ over 2♦"></textarea></label>
+</div>
+
+<div class="card">
+  <div class="section-title">Session review</div>
+  <div id="review"></div>
+  <div class="section-title" style="margin-top:12px">Session summary</div>
+  <div id="summary" class="summary"></div>
+  <div class="tools">
+    <button id="exportJson" class="primary">Export JSON</button>
+    <button id="exportPbn">Export PBN</button>
+    <button id="print">Print summary</button>
+    <button id="importBtn">Import JSON</button>
+    <button id="newSession" class="danger">New session</button>
+    <input type="file" id="file" accept=".json" hidden>
+  </div>
+</div>
+</main>
+
+<script>
+const KEY="bridge_auction_recorder_v2";
+const seats=["North","East","South","West"];
+const names={P:"Pass",X:"X",XX:"XX"};
+for(let l=1;l<=7;l++) for(const [s,sym] of [["C","♣"],["D","♦"],["H","♥"],["S","♠"],["NT","NT"]]) names[l+s]=l+sym;
+const levels=["1","2","3","4","5","6","7"];
+const strains=["C","D","H","S","NT"];
+let state=JSON.parse(localStorage.getItem(KEY)||"null")||{version:2,session:"",current:1,boards:{}};
+
+function dealerFor(n){return seats[(n-1)%4]}
+function vulFor(n){return ["None","NS","EW","Both"][Math.floor((n-1)/4)%4]}
+function data(){return state.boards[state.current]||(state.boards[state.current]={dealer:dealerFor(state.current),vul:vulFor(state.current),bids:[],alerts:{},contract:"",result:"",comment:""})}
+function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
+function bidInfo(b){if(b==="P"||b==="X"||b==="XX")return {level:0,strain:""};return {level:+b[0],strain:b.slice(1)}}
+function legalBid(b){
+ const d=data(), bids=d.bids;
+ if(bids.length===0) return b==="P"||b[0]>="1";
+ if(b==="P") return true;
+ const last=[...bids].reverse().find(x=>x!=="P"&&x!=="X"&&x!=="XX");
+ if(b==="X") return last && bids.includes(last) && ![...bids].reverse().some(x=>x!=="P"&&x!=="X"&&x!=="XX" ? false : x==="X" ? true : false);
+ if(b==="XX") return bids[bids.length-1]==="X";
+ if(!last) return true;
+ const a=bidInfo(last), c=bidInfo(b);
+ return c.level>a.level || (c.level===a.level && strains.indexOf(c.strain)>strains.indexOf(a.strain));
+}
+function auctionFinished(){
+ const b=data().bids;
+ if(b.length<4)return false;
+ let p=0;
+ for(let i=b.length-1;i>=0&&b[i]==="P";i--)p++;
+ if(p>=3)return true;
+ return false;
+}
+function contractText(){
+ const b=data(), bids=b.bids;
+ const real=bids.filter(x=>!["P","X","XX"].includes(x));
+ if(!real.length)return "No contract yet";
+ const c=real[real.length-1], idx=bids.lastIndexOf(c);
+ return "Contract: "+names[c]+" by "+seats[(idx+seats.indexOf(b.dealer))%4]+(bids.slice(idx+1).filter(x=>x==="X"||x==="XX").length?" (doubled)":"");
+}
+function displayAuction(){
+ const b=data(), a=document.getElementById("auction"); a.innerHTML="";
+ for(let i=0;i<4;i++){let d=document.createElement("div");d.className="seat";d.textContent=seats[(seats.indexOf(b.dealer)+i)%4][0];a.appendChild(d)}
+ const n=Math.max(4,b.bids.length);
+ for(let i=0;i<n;i++){let d=document.createElement("div");d.className="bid";d.textContent=names[b.bids[i]]||"";if(i===b.bids.length-1)d.classList.add("last");a.appendChild(d)}
+}
+function render(){
+ const b=data();
+ document.getElementById("sessionName").value=state.session;
+ document.getElementById("board").value=state.current;
+ document.getElementById("dealer").value=b.dealer;
+ document.getElementById("vul").value=b.vul;
+ document.getElementById("boardLabel").textContent="Board "+state.current;
+ document.getElementById("contract").textContent=contractText();
+ document.getElementById("contractInput").value=b.contract||"";
+ document.getElementById("resultInput").value=b.result||"";
+ document.getElementById("comment").value=b.comment||"";
+ displayAuction();
+
+ const count=Object.keys(state.boards).filter(n=>state.boards[n].bids.length).length;
+ document.getElementById("sessionMeta").textContent=(state.session||"Untitled session")+" • "+count+" boards recorded";
+
+ const r=document.getElementById("review");r.innerHTML="";
+ Object.keys(state.boards).sort((a,b)=>+a-+b).forEach(n=>{
+   const x=state.boards[n]; if(!x.bids.length&&!x.comment&&!x.contract&&!x.result)return;
+   const row=document.createElement("div");row.className="review-row";
+   const alerts=Object.keys(x.alerts||{}).map(i=>names[x.bids[i]]+" = "+x.alerts[i]).join(" • ");
+   row.innerHTML="<div class='details'><b>Board "+n+"</b> <span class='small'>"+x.dealer+" / "+x.vul+"</span><br><span class='auctionText'>"+x.bids.map((z,i)=>names[z]+(x.alerts&&x.alerts[i]?" ⚑":"")).join(" ")+"</span>"+(x.contract?"<br><span class='small'>"+x.contract+(x.result?" • "+x.result:"")+"</span>":"")+(x.comment?"<br><span class='small'>"+x.comment+"</span>":"")+(alerts?"<br><span class='small'>"+alerts+"</span>":"")+"</div><button>Review</button>";
+   row.querySelector("button").onclick=()=>{state.current=+n;save();scrollTo(0,0)};r.appendChild(row);
+ });
+ let s="Boards recorded: "+count+"\n\n";
+ Object.keys(state.boards).sort((a,b)=>+a-+b).forEach(n=>{const x=state.boards[n];if(!x.bids.length)return;s+="Board "+n+" — "+x.bids.map(z=>names[z]).join(" ")+"\n";if(x.contract||x.result)s+="  "+[x.contract,x.result].filter(Boolean).join(" • ")+"\n";if(x.comment)s+="  Comment: "+x.comment+"\n"});
+ document.getElementById("summary").textContent=s.trim()||"No boards recorded yet.";
+}
+
+document.getElementById("board").onchange=e=>{state.current=+e.target.value;data();save()};
+document.getElementById("dealer").onchange=e=>{data().dealer=e.target.value;save()};
+document.getElementById("vul").onchange=e=>{data().vul=e.target.value;save()};
+document.getElementById("sessionName").oninput=e=>{state.session=e.target.value;localStorage.setItem(KEY,JSON.stringify(state));render()};
+document.getElementById("contractInput").oninput=e=>{data().contract=e.target.value;localStorage.setItem(KEY,JSON.stringify(state));render()};
+document.getElementById("resultInput").oninput=e=>{data().result=e.target.value;localStorage.setItem(KEY,JSON.stringify(state));render()};
+document.getElementById("comment").oninput=e=>{data().comment=e.target.value;localStorage.setItem(KEY,JSON.stringify(state))};
+
+document.querySelectorAll("[data-bid]").forEach(btn=>btn.onclick=()=>{
+ const b=data(), bid=btn.dataset.bid;
+ if(auctionFinished()){alert("This auction has ended. Use Undo if you need to correct it.");return}
+ if(!legalBid(bid)){alert("That bid is not legal after the current auction.");return}
+ b.bids.push(bid); save();
+});
+document.getElementById("undo").onclick=()=>{const b=data();b.bids.pop();if(b.alerts)delete b.alerts[b.bids.length];save()};
+document.getElementById("clear").onclick=()=>{if(confirm("Clear this auction, including alerts and comments?")){const b=data();b.bids=[];b.alerts={};b.contract="";b.result="";b.comment="";save()}};
+document.getElementById("prev").onclick=()=>{if(state.current>1){state.current--;data();save()}};
+document.getElementById("next").onclick=()=>{if(state.current<36){state.current++;data();save()}};
+
+document.getElementById("alertBtn").onclick=()=>{
+ const b=data(); if(!b.bids.length){alert("Enter a bid first.");return}
+ document.getElementById("alertText").value=b.alerts[b.bids.length-1]||"";
+ document.getElementById("alertBox").classList.add("open");document.getElementById("alertText").focus();
+};
+document.getElementById("saveAlert").onclick=()=>{const b=data();b.alerts[b.bids.length-1]=document.getElementById("alertText").value.trim();document.getElementById("alertBox").classList.remove("open");save()};
+document.getElementById("cancelAlert").onclick=()=>document.getElementById("alertBox").classList.remove("open");
+
+document.getElementById("exportJson").onclick=()=>{
+ const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});download(blob,(state.session||"bridge-session")+".json");
+};
+function pbnCall(x){return x==="P"?"Pass":x==="X"?"X":x==="XX"?"XX":names[x]}
+document.getElementById("exportPbn").onclick=()=>{
+ let out='% Generated by Bridge Auction Recorder\n';
+ Object.keys(state.boards).sort((a,b)=>+a-+b).forEach(n=>{
+   const b=state.boards[n]; if(!b.bids.length)return;
+   out+='[Board "'+n+'"]\n[Dealer "'+b.dealer[0]+'"]\n[Vulnerable "'+b.vul+'"]\n[Auction "'+b.dealer[0]+'"]\n';
+   out+=b.bids.map((x,i)=>pbnCall(x)+(i%4===3?"\n":" ")).join("").trim()+"\n\n";
+ });
+ download(new Blob([out],{type:"text/plain"}),(state.session||"bridge-session")+".pbn");
+};
+function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+document.getElementById("print").onclick=()=>window.print();
+document.getElementById("importBtn").onclick=()=>document.getElementById("file").click();
+document.getElementById("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.boards)throw Error();state=x;save()}catch{alert("That file is not a valid Bridge Auction Recorder session.")}};r.readAsText(f)};
+document.getElementById("newSession").onclick=()=>{if(confirm("Start a new session? Export the current session first if you want to keep it.")){state={version:2,session:"",current:1,boards:{}};save()}};
+
+for(let i=1;i<=36;i++){const o=document.createElement("option");o.value=i;o.textContent=i;document.getElementById("board").appendChild(o)}
+render();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js");
+</script>
+</body></html>
