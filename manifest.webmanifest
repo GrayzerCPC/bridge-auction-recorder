@@ -1,0 +1,14 @@
+{
+  "name": "Bridge Auction Recorder",
+  "short_name": "Bridge Recorder",
+  "description": "Record duplicate bridge auctions at the table and review them later.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f5f7",
+  "theme_color": "#17324d",
+  "prefer_related_applications": false,
+  "icons": [
+    {"src":"icon-192.svg","sizes":"192x192","type":"image/svg+xml","purpose":"any maskable"},
+    {"src":"icon-512.svg","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
