@@ -1,0 +1,14 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'nz.co.cpc.bridgeauctionrecorder'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'nz.co.cpc.bridgeauctionrecorder'
+        minSdk 24
+        targetSdk 35
+        versionCode 2
+        versionName '1.1'
+    }
+}
