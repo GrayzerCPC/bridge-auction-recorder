@@ -71,7 +71,7 @@ button{font-weight:700;cursor:pointer}
   <div class="section-title">Auction</div>
   <div class="auctionWrap"><div class="auction" id="auction"></div></div>
   <div class="finalBidRow">
-    <div class="finalBidDisplay">Final Bid: <span id="finalBid">—</span></div>
+    <div class="finalBidDisplay"><span id="finalBid">No contract yet</span></div>
     <button id="undo" class="undoBid">↶ Undo</button>
   </div>
   <div class="bidgrid" style="margin-top:6px">
@@ -79,17 +79,17 @@ button{font-weight:700;cursor:pointer}
     <button data-bid="1C">1♣</button><button data-bid="1D">1♦</button><button data-bid="1H">1♥</button>
     <button data-bid="1S">1♠</button><button data-bid="1NT">1NT</button>
     <button data-bid="2C">2♣</button><button data-bid="2D">2♦</button><button data-bid="2H">2♥</button>
-    <button data-bid="2S">2♠</button><button data-bid="2NT">2NT</button>
+    <buttton data-bid="2S">2♠</button><button data-bid="2NT">2NT</button>
     <button data-bid="3C">3♣</button><button data-bid="3D">3♦</button><button data-bid="3H">3♥</button>
-    <button data-bid="3S">3♠</button><button data-bid="3NT">3NT</button>
-    <button data-bid="4C">4♣</button><button data-bid="4D">4♦</button><button data-bid="4H">4♥</button>
-    <button data-bid="4S">4♠</button><button data-bid="4NT">4NT</button>
+    <buttton data-bid="3S">3♠</button><button data-bid="3NT">3NT</button>
+    <button data-bid="4C">4♣</button><button data-bid="4D">4♦</button><button data-bid="4H">)</button>
+    <buttton data-bid="4S">4♠</button><button data-bid="4NT">4NT</button>
     <button data-bid="5C">5♣</button><button data-bid="5D">5♦</button><button data-bid="5H">5♥</button>
-    <button data-bid="5S">5♠</button><button data-bid="5NT">5NT</button>
+    <buttton data-bid="5S">5♠</button><button data-bid="5NT">5NT</button>
     <button data-bid="6C">6♣</button><button data-bid="6D">6♦</button><button data-bid="6H">6♥</button>
-    <button data-bid="6S">6♠</button><button data-bid="6NT">6NT</button>
+    <buttton data-bid="6S">6♠</button><button data-bid="6NT">6NT</button>
     <button data-bid="7C">7♣</button><button data-bid="7D">7♦</button><button data-bid="7H">7♥</button>
-    <button data-bid="7S">7♠</button><button data-bid="7NT">7NT</button>
+    <buttton data-bid="7S">7♠</button><button data-bid="7NT">7NT</button>
   </div>
 
   <div class="tools">
@@ -154,6 +154,13 @@ function auctionFinished(){
  if(p>=3)return true;
  return false;
 }
+function contractText(){
+ const b=data(), bids=b.bids;
+ const real=bids.filter(x=>!["P","X","XX"].includes(x));
+ if(!real.length)return "No contract yet";
+ const c=real[real.length-1], idx=bids.lastIndexOf(c);
+ return "Contract: "+names[c]+" by "+seats[(idx+seats.indexOf(b.dealer))%4]+(bids.slice(idx+1).filter(x=>x==="X"||x==="XX").length?" (doubled)":"");
+}
 function displayAuction(){
  const b=data(), a=document.getElementById("auction"); a.innerHTML="";
  for(let i=0;i<4;i++){let d=document.createElement("div");d.className="seat";d.textContent=seats[(seats.indexOf(b.dealer)+i)%4][0];a.appendChild(d)}
@@ -167,7 +174,7 @@ function render(){
  document.getElementById("dealer").value=b.dealer;
  document.getElementById("vul").value=b.vul;
  document.getElementById("boardLabel").textContent="Board "+state.current;
- document.getElementById("finalBid").textContent=b.bids.length ? names[b.bids[b.bids.length-1]] : "—";
+ document.getElementById("finalBid").textContent=contractText();
  displayAuction();
 
  const count=Object.keys(state.boards).filter(n=>state.boards[n].bids.length).length;
