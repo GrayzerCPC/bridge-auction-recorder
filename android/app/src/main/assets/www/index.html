@@ -24,7 +24,7 @@ button{font-weight:700;cursor:pointer}
 .boardnav{display:flex;gap:8px;align-items:center}.boardnav button{flex:1}.boardnum{font-weight:800;min-width:86px;text-align:center}
 .auctionWrap{overflow-x:auto}.auction{display:grid;grid-template-columns:repeat(4,minmax(72px,1fr));gap:4px;min-width:300px}
 .seat,.bid{text-align:center;padding:7px;border-radius:7px}.seat{font-weight:800;background:var(--light)}.bid{min-height:40px;border:1px solid #e6eaed}
-.last{outline:3px solid #a7bfd2}.contract{margin-top:10px;padding:9px;background:#f8fafb;border-radius:9px;font-weight:800}
+.last{outline:3px solid #a7bfd2}.undoBid{background:#f4f7fa;border:2px solid var(--blue);color:var(--blue)}
 .section-title{font-weight:800;margin-bottom:8px}
 .bidgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.bidgrid button{padding:9px 3px;min-height:40px}
 .tools{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}.tools button{flex:1;min-width:120px}
@@ -69,8 +69,6 @@ button{font-weight:700;cursor:pointer}
 <div class="card">
   <div class="section-title">Auction</div>
   <div class="auctionWrap"><div class="auction" id="auction"></div></div>
-  <div id="contract" class="contract"></div>
-
   <div class="bidgrid" style="margin-top:9px">
     <button data-bid="P">Pass</button><button data-bid="X">X</button><button data-bid="XX">XX</button>
     <button data-bid="1C">1♣</button><button data-bid="1D">1♦</button><button data-bid="1H">1♥</button>
@@ -87,10 +85,10 @@ button{font-weight:700;cursor:pointer}
     <button data-bid="6S">6♠</button><button data-bid="6NT">6NT</button>
     <button data-bid="7C">7♣</button><button data-bid="7D">7♦</button><button data-bid="7H">7♥</button>
     <button data-bid="7S">7♠</button><button data-bid="7NT">7NT</button>
+    <button id="undo" class="undoBid">↶ Undo</button>
   </div>
 
   <div class="tools">
-    <button id="undo">↶ Undo</button>
     <button id="clear" class="danger">Clear auction</button>
     <button id="alertBtn">⚑ Alert last bid</button>
   </div>
@@ -101,11 +99,6 @@ button{font-weight:700;cursor:pointer}
     <div class="tools"><button id="saveAlert" class="primary">Save alert</button><button id="cancelAlert">Cancel</button></div>
   </div>
 
-  <div class="grid" style="margin-top:9px">
-    <label>Contract (optional)<input id="contractInput" placeholder="e.g. 4♥ by South"></label>
-    <label>Result (optional)<input id="resultInput" placeholder="e.g. +420, -1, made 4"></label>
-  </div>
-  <label style="display:block;margin-top:8px">Review comment<textarea id="comment" rows="2" placeholder="e.g. Should have bid 3♥ over 2♦"></textarea></label>
 </div>
 
 <div class="card">
@@ -135,7 +128,7 @@ let state=JSON.parse(localStorage.getItem(KEY)||"null")||{version:2,session:"",c
 
 function dealerFor(n){return seats[(n-1)%4]}
 function vulFor(n){return ["None","NS","EW","Both"][Math.floor((n-1)/4)%4]}
-function data(){return state.boards[state.current]||(state.boards[state.current]={dealer:dealerFor(state.current),vul:vulFor(state.current),bids:[],alerts:{},contract:"",result:"",comment:""})}
+function data(){return state.boards[state.current]||(state.boards[state.current]={dealer:dealerFor(state.current),vul:vulFor(state.current),bids:[],alerts:{}})}
 function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
 function bidInfo(b){if(b==="P"||b==="X"||b==="XX")return {level:0,strain:""};return {level:+b[0],strain:b.slice(1)}}
 function legalBid(b){
@@ -157,13 +150,6 @@ function auctionFinished(){
  if(p>=3)return true;
  return false;
 }
-function contractText(){
- const b=data(), bids=b.bids;
- const real=bids.filter(x=>!["P","X","XX"].includes(x));
- if(!real.length)return "No contract yet";
- const c=real[real.length-1], idx=bids.lastIndexOf(c);
- return "Contract: "+names[c]+" by "+seats[(idx+seats.indexOf(b.dealer))%4]+(bids.slice(idx+1).filter(x=>x==="X"||x==="XX").length?" (doubled)":"");
-}
 function displayAuction(){
  const b=data(), a=document.getElementById("auction"); a.innerHTML="";
  for(let i=0;i<4;i++){let d=document.createElement("div");d.className="seat";d.textContent=seats[(seats.indexOf(b.dealer)+i)%4][0];a.appendChild(d)}
@@ -177,10 +163,6 @@ function render(){
  document.getElementById("dealer").value=b.dealer;
  document.getElementById("vul").value=b.vul;
  document.getElementById("boardLabel").textContent="Board "+state.current;
- document.getElementById("contract").textContent=contractText();
- document.getElementById("contractInput").value=b.contract||"";
- document.getElementById("resultInput").value=b.result||"";
- document.getElementById("comment").value=b.comment||"";
  displayAuction();
 
  const count=Object.keys(state.boards).filter(n=>state.boards[n].bids.length).length;
@@ -188,14 +170,14 @@ function render(){
 
  const r=document.getElementById("review");r.innerHTML="";
  Object.keys(state.boards).sort((a,b)=>+a-+b).forEach(n=>{
-   const x=state.boards[n]; if(!x.bids.length&&!x.comment&&!x.contract&&!x.result)return;
+   const x=state.boards[n]; if(!x.bids.length)return;
    const row=document.createElement("div");row.className="review-row";
    const alerts=Object.keys(x.alerts||{}).map(i=>names[x.bids[i]]+" = "+x.alerts[i]).join(" • ");
-   row.innerHTML="<div class='details'><b>Board "+n+"</b> <span class='small'>"+x.dealer+" / "+x.vul+"</span><br><span class='auctionText'>"+x.bids.map((z,i)=>names[z]+(x.alerts&&x.alerts[i]?" ⚑":"")).join(" ")+"</span>"+(x.contract?"<br><span class='small'>"+x.contract+(x.result?" • "+x.result:"")+"</span>":"")+(x.comment?"<br><span class='small'>"+x.comment+"</span>":"")+(alerts?"<br><span class='small'>"+alerts+"</span>":"")+"</div><button>Review</button>";
+   row.innerHTML="<div class='details'><b>Board "+n+"</b> <span class='small'>"+x.dealer+" / "+x.vul+"</span><br><span class='auctionText'>"+x.bids.map((z,i)=>names[z]+(x.alerts&&x.alerts[i]?" ⚑":"")).join(" ")+"</span>"+(alerts?"<br><span class='small'>"+alerts+"</span>":"")+"</div><button>Review</button>";
    row.querySelector("button").onclick=()=>{state.current=+n;save();scrollTo(0,0)};r.appendChild(row);
  });
  let s="Boards recorded: "+count+"\\n\\n";
- Object.keys(state.boards).sort((a,b)=>+a-+b).forEach(n=>{const x=state.boards[n];if(!x.bids.length)return;s+="Board "+n+" — "+x.bids.map(z=>names[z]).join(" ")+"\\n";if(x.contract||x.result)s+="  "+[x.contract,x.result].filter(Boolean).join(" • ")+"\\n";if(x.comment)s+="  Comment: "+x.comment+"\\n"});
+ Object.keys(state.boards).sort((a,b)=>+a-+b).forEach(n=>{const x=state.boards[n];if(!x.bids.length)return;s+="Board "+n+" — "+x.bids.map(z=>names[z]).join(" ")+"\\n"});
  document.getElementById("summary").textContent=s.trim()||"No boards recorded yet.";
 }
 
@@ -203,9 +185,6 @@ document.getElementById("board").onchange=e=>{state.current=+e.target.value;data
 document.getElementById("dealer").onchange=e=>{data().dealer=e.target.value;save()};
 document.getElementById("vul").onchange=e=>{data().vul=e.target.value;save()};
 document.getElementById("sessionName").oninput=e=>{state.session=e.target.value;localStorage.setItem(KEY,JSON.stringify(state));render()};
-document.getElementById("contractInput").oninput=e=>{data().contract=e.target.value;localStorage.setItem(KEY,JSON.stringify(state));render()};
-document.getElementById("resultInput").oninput=e=>{data().result=e.target.value;localStorage.setItem(KEY,JSON.stringify(state));render()};
-document.getElementById("comment").oninput=e=>{data().comment=e.target.value;localStorage.setItem(KEY,JSON.stringify(state))};
 
 document.querySelectorAll("[data-bid]").forEach(btn=>btn.onclick=()=>{
  const b=data(), bid=btn.dataset.bid;
@@ -214,7 +193,7 @@ document.querySelectorAll("[data-bid]").forEach(btn=>btn.onclick=()=>{
  b.bids.push(bid); save();
 });
 document.getElementById("undo").onclick=()=>{const b=data();b.bids.pop();if(b.alerts)delete b.alerts[b.bids.length];save()};
-document.getElementById("clear").onclick=()=>{if(confirm("Clear this auction, including alerts and comments?")){const b=data();b.bids=[];b.alerts={};b.contract="";b.result="";b.comment="";save()}};
+document.getElementById("clear").onclick=()=>{if(confirm("Clear this auction and its alerts?")){const b=data();b.bids=[];b.alerts={};save()}};
 document.getElementById("prev").onclick=()=>{if(state.current>1){state.current--;data();save()}};
 document.getElementById("next").onclick=()=>{if(state.current<36){state.current++;data();save()}};
 
