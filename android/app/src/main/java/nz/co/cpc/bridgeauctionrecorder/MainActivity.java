@@ -45,10 +45,33 @@ public class MainActivity extends Activity {
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
 
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                repairBiddingUi();
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(new AndroidFiles(), "AndroidFiles");
         webView.loadUrl("file:///android_asset/www/index.html");
+    }
+
+    private void repairBiddingUi() {
+        String js = "(function(){" +
+                "window.legalBid=function(b){" +
+                "const d=data(),bids=d.bids,dealerIndex=seats.indexOf(d.dealer),callerIndex=(dealerIndex+bids.length)%4,callerSide=callerIndex%2;" +
+                "if(b==='P')return true;" +
+                "if(b!=='X'&&b!=='XX'){const last=[...bids].reverse().find(x=>!['P','X','XX'].includes(x));if(!last)return true;const a=bidInfo(last),c=bidInfo(b);return c.level>a.level||(c.level===a.level&&strains.indexOf(c.strain)>strains.indexOf(a.strain));}" +
+                "let i=-1;for(let n=bids.length-1;n>=0;n--){if(bids[n]!=='P'){i=n;break;}}if(i<0)return false;" +
+                "const action=bids[i],lastCaller=(dealerIndex+i)%4,lastSide=lastCaller%2;" +
+                "if(b==='X')return action!=='X'&&action!=='XX'&&lastSide!==callerSide;" +
+                "if(b==='XX')return action==='X'&&lastSide!==callerSide;return false;};" +
+                "const grid=document.querySelector('.bidgrid');if(!grid)return;grid.innerHTML='';" +
+                "const calls=['P','X','XX','1C','1D','1H','1S','1NT','2C','2D','2H','2S','2NT','3C','3D','3H','3S','3NT','4C','4D','4H','4S','4NT','5C','5D','5H','5S','5NT','6C','6D','6H','6S','6NT','7C','7D','7H','7S','7NT'];" +
+                "calls.forEach(function(bid){const btn=document.createElement('button');btn.dataset.bid=bid;btn.textContent=names[bid];btn.onclick=function(){const board=data();if(auctionFinished()){alert('This auction has ended. Use Undo if you need to correct it.');return;}if(!window.legalBid(bid)){alert('That bid is not legal after the current auction.');return;}board.bids.push(bid);save();};grid.appendChild(btn);});" +
+                "})();";
+        webView.evaluateJavascript(js, null);
     }
 
     public class AndroidFiles {
