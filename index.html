@@ -25,6 +25,7 @@ button{font-weight:700;cursor:pointer}
 .auctionWrap{overflow-x:auto}.auction{display:grid;grid-template-columns:repeat(4,minmax(72px,1fr));gap:4px;min-width:300px}
 .seat,.bid{text-align:center;padding:7px;border-radius:7px}.seat{font-weight:800;background:var(--light)}.bid{min-height:40px;border:1px solid #e6eaed}
 .last{outline:3px solid #a7bfd2}.undoBid{background:#f4f7fa;border:2px solid var(--blue);color:var(--blue)}
+.finalBidRow{display:flex;align-items:center;gap:8px;margin-top:9px}.finalBidDisplay{flex:1;min-height:40px;padding:9px 12px;border-radius:9px;background:var(--light);font-weight:800}.finalBidRow .undoBid{min-width:110px;min-height:40px}
 .section-title{font-weight:800;margin-bottom:8px}
 .bidgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.bidgrid button{padding:9px 3px;min-height:40px}
 .tools{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}.tools button{flex:1;min-width:120px}
@@ -69,7 +70,11 @@ button{font-weight:700;cursor:pointer}
 <div class="card">
   <div class="section-title">Auction</div>
   <div class="auctionWrap"><div class="auction" id="auction"></div></div>
-  <div class="bidgrid" style="margin-top:9px">
+  <div class="finalBidRow">
+    <div class="finalBidDisplay">Final Bid: <span id="finalBid">—</span></div>
+    <button id="undo" class="undoBid">↶ Undo</button>
+  </div>
+  <div class="bidgrid" style="margin-top:6px">
     <button data-bid="P">Pass</button><button data-bid="X">X</button><button data-bid="XX">XX</button>
     <button data-bid="1C">1♣</button><button data-bid="1D">1♦</button><button data-bid="1H">1♥</button>
     <button data-bid="1S">1♠</button><button data-bid="1NT">1NT</button>
@@ -85,7 +90,6 @@ button{font-weight:700;cursor:pointer}
     <button data-bid="6S">6♠</button><button data-bid="6NT">6NT</button>
     <button data-bid="7C">7♣</button><button data-bid="7D">7♦</button><button data-bid="7H">7♥</button>
     <button data-bid="7S">7♠</button><button data-bid="7NT">7NT</button>
-    <button id="undo" class="undoBid">↶ Undo</button>
   </div>
 
   <div class="tools">
@@ -163,6 +167,7 @@ function render(){
  document.getElementById("dealer").value=b.dealer;
  document.getElementById("vul").value=b.vul;
  document.getElementById("boardLabel").textContent="Board "+state.current;
+ document.getElementById("finalBid").textContent=b.bids.length ? names[b.bids[b.bids.length-1]] : "—";
  displayAuction();
 
  const count=Object.keys(state.boards).filter(n=>state.boards[n].bids.length).length;
