@@ -31,12 +31,13 @@ jobs:
       - name: Prepare release APK
         run: cp app/build/outputs/apk/debug/app-debug.apk ../Bridge_Auction_Recorder_v1.10.apk
       - name: Create GitHub Release
-        working-directory: .
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          cd ..
-          gh release create v1.10 Bridge_Auction_Recorder_v1.10.apk \
-            --title "Bridge Auction Recorder v1.10" \
-            --target "${GITHUB_SHA}" \
-            --notes "Stable session-trial version of Bridge Auction Recorder.\n\nDownload Bridge_Auction_Recorder_v1.10.apk below on an Android phone and open it to install. Because the app is distributed outside Google Play, Android may ask you to allow installation from your browser or Files app."
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.10
+          name: Bridge Auction Recorder v1.10
+          target_commitish: ${{ github.sha }}
+          body: |
+            Stable session-trial version of Bridge Auction Recorder.
+
+            Download **Bridge_Auction_Recorder_v1.10.apk** below on an Android phone and open it to install. Because the app is distributed outside Google Play, Android may ask you to allow installation from your browser or Files app.
+          files: Bridge_Auction_Recorder_v1.10.apk
