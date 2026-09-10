@@ -1,0 +1,42 @@
+name: Publish v1.10 Release
+
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v1.10.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Prepare release APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk Bridge_Auction_Recorder_v1.10.apk
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v1.10 Bridge_Auction_Recorder_v1.10.apk \
+            --title "Bridge Auction Recorder v1.10" \
+            --target "${GITHUB_SHA}" \
+            --notes "Stable session-trial version of Bridge Auction Recorder.\n\nDownload **Bridge_Auction_Recorder_v1.10.apk** below on an Android phone and open it to install. Because the app is distributed outside Google Play, Android may ask you to allow installation from your browser or Files app."
