@@ -45,7 +45,7 @@ jobs:
       - name: Prepare public download
         run: |
           mkdir -p download
-          cp android/app/build/outputs/apk/debug/app-debug.apk download/Bridge_Auction_Recorder_v1.10.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk download/Bridge_Auction_Recorder_v1.11.apk
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
